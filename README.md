@@ -239,6 +239,7 @@ UNIVERSITY_DATA/
 │   ├── FINAL_DEMO.md            # Interactive walkthrough guide
 │   ├── METHODOLOGY.md           # Mathematical models & delta formulations
 │   ├── STAKEHOLDER_WALKTHROUGH.md # 7 core stakeholder question answers
+│   ├── STUDENT_PROJECT_PHASE_REPORT.md # Academic Capstone / Phase-I submission report
 │   └── TESTING.md               # Unit and integration test specifications
 ├── frontend/
 │   ├── src/
@@ -379,6 +380,7 @@ For deep-dive technical insights, consult the comprehensive documentation in [`d
 - 👥 [`docs/STAKEHOLDER_WALKTHROUGH.md`](docs/STAKEHOLDER_WALKTHROUGH.md): Direct answers to the 7 core operational questions.
 - 🔒 [`docs/ETHICS_NOTE.md`](docs/ETHICS_NOTE.md): Ethical data governance and synthetic privacy guarantees.
 - 🎬 [`docs/FINAL_DEMO.md`](docs/FINAL_DEMO.md): Evaluation walkthrough script for live presentation.
+- 📘 [`docs/STUDENT_PROJECT_PHASE_REPORT.md`](docs/STUDENT_PROJECT_PHASE_REPORT.md): **Academic Capstone / Phase-I Project Evaluation Report** (Anna University & RTC format).
 
 ---
 
