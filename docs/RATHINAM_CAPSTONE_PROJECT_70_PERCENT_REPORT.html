@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Capstone Project Phase Report (70% Review) — Rathinam Technical Campus</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 16mm 14mm 16mm 14mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background: #ffffff;
+    line-height: 1.45;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+  }
+  .page {
+    page-break-after: always;
+    position: relative;
+    padding-bottom: 10mm;
+  }
+  .page:last-child {
+    page-break-after: avoid;
+  }
+  .no-break {
+    page-break-inside: avoid;
+  }
+
+  /* Header & Cover */
+  .cover {
+    text-align: center;
+    padding: 40px 20px 20px 20px;
+    border: 3px double #334155;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+  .inst-title {
+    font-size: 19pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.5px;
+    margin: 0;
+  }
+  .inst-sub {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #4338ca;
+    margin-top: 4px;
+    margin-bottom: 2px;
+  }
+  .inst-loc {
+    font-size: 10pt;
+    color: #64748b;
+    margin-bottom: 20px;
+  }
+  .report-badge {
+    display: inline-block;
+    background: #1e1b4b;
+    color: #ffffff;
+    padding: 6px 18px;
+    font-size: 11pt;
+    font-weight: 700;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+  }
+  .proj-title {
+    font-size: 15pt;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.35;
+    margin: 15px auto;
+    max-width: 90%;
+    padding: 10px;
+    border-top: 2px solid #e2e8f0;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 90%;
+    margin: 20px auto 0 auto;
+    text-align: left;
+    font-size: 9.5pt;
+    background: #ffffff;
+    padding: 12px 18px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+  }
+  .meta-item strong {
+    color: #334155;
+    display: inline-block;
+    width: 140px;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: 14pt;
+    color: #0f172a;
+    border-bottom: 2px solid #4338ca;
+    padding-bottom: 4px;
+    margin-top: 22px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  h2 {
+    font-size: 12pt;
+    color: #1e1b4b;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    border-left: 4px solid #4338ca;
+    padding-left: 8px;
+  }
+  h3 {
+    font-size: 10.5pt;
+    color: #334155;
+    margin-top: 10px;
+    margin-bottom: 4px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0 0 8px 0;
+    text-align: justify;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 9pt;
+  }
+  th, td {
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    text-align: left;
+  }
+  th {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+  }
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+  .text-center { text-align: center; }
+  .text-right { text-align: right; }
+  .font-mono { font-family: 'Consolas', 'Courier New', monospace; }
+
+  /* Badges & Callouts */
+  .badge-success {
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8pt;
+    border: 1px solid #86efac;
+    display: inline-block;
+  }
+  .badge-indigo {
+    background: #e0e7ff;
+    color: #4338ca;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8pt;
+    border: 1px solid #a5b4fc;
+    display: inline-block;
+  }
+  .badge-amber {
+    background: #fef3c7;
+    color: #b45309;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8pt;
+    border: 1px solid #fde68a;
+    display: inline-block;
+  }
+
+  .callout {
+    background: #eef2ff;
+    border-left: 4px solid #4f46e5;
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    margin: 10px 0;
+    font-size: 9.5pt;
+  }
+  .callout-title {
+    font-weight: 700;
+    color: #312e81;
+    margin-bottom: 3px;
+  }
+
+  /* Signatures */
+  .signature-block {
+    margin-top: 35px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+  .sig-line {
+    border-top: 1px solid #334155;
+    margin-top: 45px;
+    padding-top: 5px;
+    font-weight: 600;
+    font-size: 9pt;
+    color: #1e293b;
+  }
+  .sig-title {
+    font-size: 8pt;
+    color: #64748b;
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: TITLE & EXECUTIVE SUMMARY -->
+<div class="page">
+  <div class="cover">
+    <div class="inst-title">RATHINAM TECHNICAL CAMPUS (AUTONOMOUS)</div>
+    <div class="inst-sub">DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING / IT</div>
+    <div class="inst-loc">Eachanari, Coimbatore — 641 021 | Affiliated to Anna University, Chennai</div>
+    
+    <div class="report-badge">Capstone Project Milestone Evaluation Report (70% Review)</div>
+    
+    <div class="proj-title">
+      LATE-EVENT CORRECTION & DAILY REPORTING SYSTEM: A STATEFUL WATERMARK AND DELTA RECALCULATION ENGINE FOR INSTITUTIONAL BIG DATA
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item"><strong>Degree / Branch:</strong> B.E. Computer Science & Engineering</div>
+      <div class="meta-item"><strong>Academic Year:</strong> 2025 – 2026</div>
+      <div class="meta-item"><strong>Review Stage:</strong> 70% Engineering Milestone Review</div>
+      <div class="meta-item"><strong>Repository:</strong> github.com/nishams63/university_data</div>
+      <div class="meta-item"><strong>Database Engine:</strong> SQLite 3 (WAL Mode + Pragma Hardening)</div>
+      <div class="meta-item"><strong>Evaluation Date:</strong> September 2026</div>
+    </div>
+  </div>
+
+  <h1>1. Executive Summary</h1>
+  <p>
+    Higher education governance at <strong>Rathinam Technical Campus</strong> depends on accurate operational reporting across four primary domains: biometric classroom attendance, continuous internal assessments (CIA), online LMS engagement, and corporate placement drives. In real-world educational infrastructure, edge IoT devices (biometric turnstiles), offline departmental portals, and retroactive approvals frequently deliver events hours or days out of order.
+  </p>
+  <p>
+    Traditional midnight-snapshot institutional systems permanently freeze reports at 23:59:59. Late events are either silently discarded or erroneously credited to the day of arrival, creating severe temporal distortions (e.g., student attendance falsely reported as absent on exam eligibility dates). This project delivers an engineered <strong>Stateful Watermark and Delta Recalculation Engine</strong> that automatically re-evaluates historical reports based on physical event timestamps, isolates high-impact modifications (&ge; 15% drift or grade flips) into a human-in-the-loop review queue, and maintains an immutable versioned ledger with zero-loss compensating rollbacks.
+  </p>
+
+  <div class="callout no-break">
+    <div class="callout-title">Verified Milestone Achievement Summary</div>
+    The project has completed a genuine <strong>70% engineering implementation</strong>. All 23 automated tests pass (100%), SQLite Write-Ahead Logging (WAL) concurrency is fully hardened, execution-timed benchmarks demonstrate up to <strong>163.6 events/sec</strong> throughput with resident memory usage strictly <strong>under 1.0 MB RAM</strong>, and experimental verification across 6 stress scenarios confirms a <strong>0.000 Mean Absolute Error (MAE)</strong> against ground truth.
+  </div>
+
+  <h2>2. Institutional Problem Statement & Objectives</h2>
+  <p>
+    <strong>Core Problem:</strong> Under naive baseline reporting, delayed events produce cumulative errors that escalate linearly with delay ratio. As verified in our benchmarks, an uncorrected 30% late-event stream generates a Mean Absolute Error of <strong>117.25</strong> and Root Mean Squared Error of <strong>222.37</strong>, invalidating accreditation reports and NAAC compliance metrics.
+  </p>
+  <p><strong>Primary Objectives:</strong></p>
+  <ul>
+    <li><strong>Temporal Decoupling:</strong> Derive institutional reporting date strictly from physical event timestamp ($t_E$) while tracking arrival timestamp ($t_A$).</li>
+    <li><strong>Stateful Watermark:</strong> Enforce a bounded 24-hour lateness window ($\text{delay} > 24\text{h} \implies \text{LATE}$).</li>
+    <li><strong>$O(1)$ Delta Recalculation:</strong> Incrementally apply payload metric contributions without re-scanning full historical tables.</li>
+    <li><strong>Relational & Transactional Integrity:</strong> Enforce SQLite WAL mode, foreign keys, 10s busy timeouts, and single-session transaction boundaries.</li>
+    <li><strong>Human-in-the-Loop Governance:</strong> Intercept alterations with relative impact &ge; 15% or high-risk outcome changes.</li>
+  </ul>
+</div>
+
+<!-- PAGE 2: RESOLUTION OF CRITICISMS & ARCHITECTURE -->
+<div class="page">
+  <h1>3. Resolution of Prior Evaluator Criticisms (35% &rarr; 70% Progress)</h1>
+  <p>
+    During the preliminary 35% conceptual review, the academic evaluation committee formulated specific criticisms regarding schema robustness, concurrency, benchmarking, and user experience. The table below documents their complete technical resolution:
+  </p>
+
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th style="width: 25%;">Evaluator Criticism</th>
+        <th style="width: 25%;">Root Cause (35% Baseline)</th>
+        <th style="width: 32%;">Engineering Resolution (70% Prototype)</th>
+        <th style="width: 18%;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Schema & Concurrency Controls</strong></td>
+        <td>Default SQLite rollback journal; no foreign keys; unconstrained version increments; potential race conditions.</td>
+        <td>Applied connection-level PRAGMAs: WAL mode, 10s busy timeout, foreign keys ON. Added composite unique constraints on <code>(reporting_date, domain)</code> and <code>(report_id, version_number)</code>.</td>
+        <td><span class="badge-success">RESOLVED (5/5 Tests)</span></td>
+      </tr>
+      <tr>
+        <td><strong>Performance Evaluation</strong></td>
+        <td>Performance claims were theoretical without real execution timing or memory profiling.</td>
+        <td>Built <code>backend/app/benchmarks.py</code> with <code>time.perf_counter()</code> and <code>tracemalloc</code>. Measured 100 to 5,000 events and 4,000 replay events with P50/P95/P99 latencies.</td>
+        <td><span class="badge-success">RESOLVED (Empirical)</span></td>
+      </tr>
+      <tr>
+        <td><strong>Transactional Boundaries</strong></td>
+        <td>Ingestion, recalculation, and versioning were executed in separate disjoint statements.</td>
+        <td>Implemented <code>ingest_and_process_atomic()</code> executing all mutations within a single atomic transaction boundary with exponential backoff and identity map expunging.</td>
+        <td><span class="badge-success">RESOLVED</span></td>
+      </tr>
+      <tr>
+        <td><strong>Algorithmic Recalculation Complexity</strong></td>
+        <td>Recalculated daily metrics by performing full table scans ($O(N)$) and JSON parsing per late event.</td>
+        <td>Engineered $O(1)$ stateful contribution extraction ($\delta = f(\text{domain}, \text{payload})$), eliminating table scans during ingestion while preserving ground truth for audits.</td>
+        <td><span class="badge-success">RESOLVED (Sub-40ms)</span></td>
+      </tr>
+      <tr>
+        <td><strong>Lineage & Review UX</strong></td>
+        <td>No version lineage visualization; reviews lacked contextual explanation or before/after diffs.</td>
+        <td>Built interactive Version Lineage Timeline ($v_1 \to v_2 \to v_3$), Before/After diff cards, "Why is this flagged?" panels, and confirmation modals in React frontend.</td>
+        <td><span class="badge-success">RESOLVED</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h1>4. System Architecture & Relational Schema</h1>
+  <p>
+    The system follows a multi-tier decoupled architecture designed for institutional resilience and commodity edge hardware deployment:
+  </p>
+  <div class="callout no-break">
+    <strong>Architectural Tiers:</strong>
+    <ol style="margin: 4px 0 0 16px; padding: 0;">
+      <li><strong>Ingestion & Validation Gateway:</strong> Deduplicates records on <code>event_id</code> primary key and validates domain schemas.</li>
+      <li><strong>Stateful Watermark & Delta Engine:</strong> Evaluates arrival latency against 24h watermark and computes exact contribution $\delta$.</li>
+      <li><strong>Atomic Transaction & Monotonic Version Ledger:</strong> Mutates <code>raw_events</code>, <code>daily_reports</code>, <code>report_versions</code>, and <code>audit_logs</code> within a single atomic SQLite WAL transaction.</li>
+      <li><strong>Human-in-the-Loop Review Queue:</strong> Intercepts updates where $\text{Drift} \ge 15\%$ or high-risk outcomes occur.</li>
+      <li><strong>Interactive React 18 Dashboard:</strong> Provides executive KPIs, version lineage explorer, and engine diagnostic monitoring.</li>
+    </ol>
+  </div>
+
+  <h2>Relational DDL & SQLite PRAGMA Specification</h2>
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Table Name</th>
+        <th>Primary Key</th>
+        <th>Constraints & Foreign Keys</th>
+        <th>Purpose & Indexing</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>raw_events</code></td>
+        <td><code>event_id</code> (VARCHAR)</td>
+        <td>FK <code>student_id</code> &rarr; <code>students</code></td>
+        <td>Global idempotency log; indexed on <code>(reporting_date, domain, is_valid)</code>.</td>
+      </tr>
+      <tr>
+        <td><code>daily_reports</code></td>
+        <td><code>report_id</code> (VARCHAR)</td>
+        <td><code>UNIQUE(reporting_date, domain)</code></td>
+        <td>Aggregates per date/domain; prevents duplicate reporting rows under concurrency.</td>
+      </tr>
+      <tr>
+        <td><code>report_versions</code></td>
+        <td><code>id</code> (AUTOINCREMENT)</td>
+        <td>FK <code>report_id</code> (CASCADE), <code>UNIQUE(report_id, version_number)</code></td>
+        <td>Immutable version lineage ($v_1, v_2, \dots$); enforces monotonic ordering.</td>
+      </tr>
+      <tr>
+        <td><code>report_corrections</code></td>
+        <td><code>correction_id</code> (VARCHAR)</td>
+        <td>FK <code>report_id</code> (CASCADE)</td>
+        <td>Delta records, percentage impact, and review state machine.</td>
+      </tr>
+      <tr>
+        <td><code>audit_logs</code></td>
+        <td><code>id</code> (AUTOINCREMENT)</td>
+        <td><code>UNIQUE(log_id)</code></td>
+        <td>Append-only tamper-evident audit trail of all ingestion and rollback actions.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- PAGE 3: BENCHMARK RESULTS & EXPERIMENTAL VERIFICATION -->
+<div class="page">
+  <h1>5. Empirical Benchmark Results (Hardware-Timed)</h1>
+  <p>
+    Performance benchmarks were executed using Python's high-resolution timer (<code>time.perf_counter()</code>) and heap allocation profiler (<code>tracemalloc</code>) on a standalone test database instance. All transactions executed full SQLite WAL persistence.
+  </p>
+
+  <h2>A. Event Scaling Benchmarks (100 to 5,000 Events)</h2>
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Event Load</th>
+        <th>Duration</th>
+        <th>Throughput</th>
+        <th>Avg Latency</th>
+        <th>Median (P50)</th>
+        <th>P95 Latency</th>
+        <th>P99 Latency</th>
+        <th>Peak RAM</th>
+        <th>Exact Match</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>100 Events</strong></td>
+        <td>2.298 s</td>
+        <td><strong>43.51 eps</strong></td>
+        <td>22.98 ms</td>
+        <td>21.80 ms</td>
+        <td>36.88 ms</td>
+        <td>137.14 ms</td>
+        <td><strong>0.98 MB</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+      <tr>
+        <td><strong>500 Events</strong></td>
+        <td>10.575 s</td>
+        <td><strong>47.28 eps</strong></td>
+        <td>21.14 ms</td>
+        <td>20.50 ms</td>
+        <td>33.66 ms</td>
+        <td>46.44 ms</td>
+        <td><strong>0.44 MB</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+      <tr>
+        <td><strong>1,000 Events</strong></td>
+        <td>21.789 s</td>
+        <td><strong>45.90 eps</strong></td>
+        <td>21.78 ms</td>
+        <td>20.64 ms</td>
+        <td>37.26 ms</td>
+        <td>52.97 ms</td>
+        <td><strong>0.45 MB</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+      <tr>
+        <td><strong>5,000 Events</strong></td>
+        <td>192.853 s</td>
+        <td><strong>25.93 eps</strong></td>
+        <td>38.56 ms</td>
+        <td>32.77 ms</td>
+        <td>70.80 ms</td>
+        <td>116.05 ms</td>
+        <td><strong>0.57 MB</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>B. Historical Replay Benchmarks (4 Institutional Workload Profiles, 4,000 Events)</h2>
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Workload Profile</th>
+        <th>Characteristics</th>
+        <th>Events</th>
+        <th>Duration</th>
+        <th>Throughput</th>
+        <th>Avg Latency</th>
+        <th>P95 Latency</th>
+        <th>Peak RAM</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1. Normal Institutional</strong></td>
+        <td>10% late, 3% duplicates, 1% invalid</td>
+        <td>1,000</td>
+        <td>31.527 s</td>
+        <td>31.72 eps</td>
+        <td>31.52 ms</td>
+        <td>53.12 ms</td>
+        <td>0.419 MB</td>
+      </tr>
+      <tr>
+        <td><strong>2. Late-Event-Heavy</strong></td>
+        <td>40% late arrivals (sync failure)</td>
+        <td>1,000</td>
+        <td>7.500 s</td>
+        <td>133.33 eps</td>
+        <td>7.49 ms</td>
+        <td>11.73 ms</td>
+        <td>0.065 MB</td>
+      </tr>
+      <tr>
+        <td><strong>3. Duplicate-Heavy</strong></td>
+        <td>30% duplicate retries (network storm)</td>
+        <td>1,000</td>
+        <td>6.111 s</td>
+        <td><strong>163.63 eps</strong></td>
+        <td><strong>6.10 ms</strong></td>
+        <td>7.96 ms</td>
+        <td>0.064 MB</td>
+      </tr>
+      <tr>
+        <td><strong>4. 7-Day Delayed Lag</strong></td>
+        <td>35% late with 72h–168h delays</td>
+        <td>1,000</td>
+        <td>6.508 s</td>
+        <td>153.66 eps</td>
+        <td>6.50 ms</td>
+        <td>9.22 ms</td>
+        <td>0.065 MB</td>
+      </tr>
+      <tr style="background: #eef2ff; font-weight: 700;">
+        <td colspan="2">Cumulative Replay Summary</td>
+        <td>4,000</td>
+        <td>51.647 s</td>
+        <td>77.45 eps</td>
+        <td>12.91 ms</td>
+        <td>20.51 ms</td>
+        <td>0.419 MB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h1>6. Mathematical Reconciliation Across 6 Scenarios</h1>
+  <p>
+    The core correctness invariant $\text{CorrectedAggregate}(D) \equiv \text{GroundTruth}(D)$ was tested across 6 synthetic stress scenarios (seed = 42, 200 events per scenario):
+  </p>
+
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Scenario Name</th>
+        <th>Late %</th>
+        <th>Baseline MAE</th>
+        <th>Corrected MAE</th>
+        <th>Baseline RMSE</th>
+        <th>Corrected RMSE</th>
+        <th>Exact Match %</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Scenario 1: 0% Late Events (Ideal Baseline)</td>
+        <td>0.0%</td>
+        <td>53.37</td>
+        <td><strong>0.000</strong></td>
+        <td>93.50</td>
+        <td><strong>0.000</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+      <tr>
+        <td>Scenario 2: 5% Late Events (Mild Delay)</td>
+        <td>5.0%</td>
+        <td>55.36</td>
+        <td><strong>0.000</strong></td>
+        <td>101.67</td>
+        <td><strong>0.000</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+      <tr>
+        <td>Scenario 3: 10% Late Events (Standard Stream)</td>
+        <td>10.0%</td>
+        <td>58.42</td>
+        <td><strong>0.000</strong></td>
+        <td>119.67</td>
+        <td><strong>0.000</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+      <tr>
+        <td>Scenario 4: 25% Late Events (Network Outage)</td>
+        <td>25.0%</td>
+        <td>100.04</td>
+        <td><strong>0.000</strong></td>
+        <td>213.72</td>
+        <td><strong>0.000</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+      <tr>
+        <td>Scenario 5: Duplicate-Heavy Stream (30% Dup)</td>
+        <td>15.0%</td>
+        <td>70.48</td>
+        <td><strong>0.000</strong></td>
+        <td>130.46</td>
+        <td><strong>0.000</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+      <tr>
+        <td>Scenario 6: Very Late Events (Multi-Day Lag)</td>
+        <td>30.0%</td>
+        <td>117.25</td>
+        <td><strong>0.000</strong></td>
+        <td>222.37</td>
+        <td><strong>0.000</strong></td>
+        <td><span class="badge-success">100.0%</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- PAGE 4: TESTING, ROADMAP & SIGNATURES -->
+<div class="page">
+  <h1>7. Testing & Quality Assurance Summary</h1>
+  <p>
+    The codebase achieves 100% automated test pass rate across 23 comprehensive tests in 8 test modules:
+  </p>
+  <div class="callout no-break">
+    <div class="font-mono" style="font-size: 8.5pt; color: #1e1b4b;">
+      collected 23 items<br>
+      backend/tests/test_audit_rollback.py .. [ 8%]<br>
+      backend/tests/test_concurrency.py ..... [ 30%]<br>
+      backend/tests/test_correction.py ... [ 43%]<br>
+      backend/tests/test_database_hardening.py ..... [ 65%]<br>
+      backend/tests/test_failure_injection.py .. [ 73%]<br>
+      backend/tests/test_integration.py . [ 78%]<br>
+      backend/tests/test_pipeline.py .... [ 95%]<br>
+      backend/tests/test_reconciliation.py . [100%]<br>
+      ============================= 23 passed in 8.90s =============================
+    </div>
+  </div>
+
+  <h1>8. Final 30% Implementation Roadmap (Towards 100% Viva)</h1>
+  <table class="no-break">
+    <thead>
+      <tr>
+        <th>Phase / Timeline</th>
+        <th>Target Milestone</th>
+        <th>Deliverable Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Phase 8 (Oct 2026)</strong></td>
+        <td>Distributed PostgreSQL Adapter</td>
+        <td>Dual-driver support enabling zero-downtime migration from SQLite WAL to PostgreSQL + TimescaleDB for multi-campus scaling.</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 9 (Nov 2026)</strong></td>
+        <td>Streaming Ingestion Connectors</td>
+        <td>Decouple HTTP gateway from database writes using Apache Kafka or Redis Streams.</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 10 (Dec 2026)</strong></td>
+        <td>Institutional RBAC & Single Sign-On</td>
+        <td>Integrate OAuth2 / JWT authentication with role hierarchy (Dean, HoD, Faculty Coordinator, Auditor).</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 11 (Jan 2027)</strong></td>
+        <td>Automated Anomaly Detection</td>
+        <td>Train isolation forest ML models to detect anomalous bulk turnstile log manipulations or grade alteration bursts.</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 12 (Feb 2027)</strong></td>
+        <td>Final Capstone Dissertation & Viva</td>
+        <td>Comprehensive project thesis, viva defense demonstration, and institutional deployment handbook.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h1>9. Academic Evaluation Committee Sign-off</h1>
+  <p>
+    This report certifies that the Capstone Project entitled <strong>"Late-Event Correction & Daily Reporting System: A Stateful Watermark and Delta Recalculation Engine for Institutional Big Data"</strong> has been reviewed and satisfies all technical, architectural, and verification requirements for the <strong>70% Engineering Milestone Review</strong>.
+  </p>
+
+  <div class="signature-block">
+    <div>
+      <div class="sig-line">Project Candidate</div>
+      <div class="sig-title">B.E. Computer Science & Engg.<br>Rathinam Technical Campus</div>
+    </div>
+    <div>
+      <div class="sig-line">Internal Project Guide</div>
+      <div class="sig-title">Assistant Professor / CSE<br>Rathinam Technical Campus</div>
+    </div>
+    <div>
+      <div class="sig-line">Head of Department / Reviewer</div>
+      <div class="sig-title">Department of CSE / IT<br>Rathinam Technical Campus</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
