@@ -5,12 +5,13 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from app.config import settings
-from app.database import Base, engine, get_db, SessionLocal
+from app.database import Base, engine, get_db, SessionLocal, get_engine_diagnostics
 from app.models import RawEvent, DailyReport, ReportVersion, ReportCorrection, AuditLog, ExperimentResult
 from app.schemas import (
     EventIngestRequest, RawEventResponse, DailyReportResponse,
     ReportVersionResponse, ReportCorrectionResponse, ReviewActionRequest,
-    RollbackRequest, AuditLogResponse, SystemMetricsSummary, ExperimentScenarioResponse
+    RollbackRequest, AuditLogResponse, SystemMetricsSummary, ExperimentScenarioResponse,
+    HealthCheckResponse, WatermarkStatusResponse, EngineDiagnosticsResponse
 )
 from app.pipeline import ingest_raw_event
 from app.correction import process_and_apply_corrections, review_pending_correction, compute_ground_truth
@@ -40,15 +41,69 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/health")
-def health_check():
+@app.get("/api/health", response_model=HealthCheckResponse)
+def health_check(db: Session = Depends(get_db)):
+    diagnostics = get_engine_diagnostics(db)
     return {
         "status": "HEALTHY",
         "institution": settings.INSTITUTION_NAME,
         "system": settings.SYSTEM_TITLE,
         "late_threshold_hours": settings.LATE_THRESHOLD_HOURS,
         "high_impact_threshold_percent": settings.HIGH_IMPACT_THRESHOLD_PERCENT,
-        "mode": "Simulation Mode — Synthetic Demonstration Data"
+        "mode": "Simulation Mode — Synthetic Demonstration Data",
+        "database": diagnostics
+    }
+
+@app.get("/api/watermark", response_model=WatermarkStatusResponse)
+def get_watermark_status(db: Session = Depends(get_db)):
+    from sqlalchemy import func
+    from datetime import datetime, timezone, timedelta
+    
+    total_events = db.query(RawEvent).count()
+    late_events_count = db.query(RawEvent).filter(RawEvent.is_late == True, RawEvent.is_valid == True).count()
+    on_time_events_count = db.query(RawEvent).filter(RawEvent.is_late == False, RawEvent.is_valid == True).count()
+    
+    max_delay = db.query(func.max(RawEvent.delay_hours)).scalar() or 0.0
+    latest_event_ts = db.query(func.max(RawEvent.event_timestamp)).scalar()
+    
+    now_utc = datetime.now(timezone.utc)
+    system_time_str = now_utc.isoformat()
+    
+    # Watermark = latest_event_ts - 24 hours
+    current_watermark_ts = None
+    if latest_event_ts:
+        try:
+            clean_ts = latest_event_ts.replace("Z", "+00:00")
+            dt = datetime.fromisoformat(clean_ts)
+            watermark_dt = dt - timedelta(hours=settings.LATE_THRESHOLD_HOURS)
+            current_watermark_ts = watermark_dt.isoformat()
+        except Exception:
+            current_watermark_ts = None
+
+    return WatermarkStatusResponse(
+        institution_name=settings.INSTITUTION_NAME,
+        watermark_delay_hours=settings.LATE_THRESHOLD_HOURS,
+        late_threshold_hours=settings.LATE_THRESHOLD_HOURS,
+        latest_event_timestamp=latest_event_ts,
+        current_watermark_timestamp=current_watermark_ts,
+        system_time=system_time_str,
+        total_events=total_events,
+        late_events_count=late_events_count,
+        on_time_events_count=on_time_events_count,
+        max_delay_hours_observed=round(float(max_delay), 2),
+        watermark_policy="Bounded Out-Of-Order Event Ingestion (24h Watermark Window)"
+    )
+
+@app.get("/api/metrics/performance")
+def get_performance_metrics():
+    import os, json
+    bench_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "results", "performance_benchmark.json")
+    if os.path.exists(bench_path):
+        with open(bench_path, "r") as f:
+            return json.load(f)
+    return {
+        "status": "NOT_GENERATED",
+        "message": "Performance benchmark data has not been generated yet. Run scripts/run_benchmarks.py to populate."
     }
 
 @app.get("/api/metrics/summary", response_model=SystemMetricsSummary)

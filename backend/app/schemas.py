@@ -182,3 +182,34 @@ class ExperimentScenarioResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class EngineDiagnosticsResponse(BaseModel):
+    engine_url: str
+    is_sqlite: bool
+    journal_mode: str
+    busy_timeout: int
+    foreign_keys: int
+    synchronous: str
+
+class HealthCheckResponse(BaseModel):
+    status: str
+    institution: str
+    system: str
+    late_threshold_hours: float
+    high_impact_threshold_percent: float
+    mode: str
+    database: EngineDiagnosticsResponse
+
+class WatermarkStatusResponse(BaseModel):
+    institution_name: str = "RATHINAM TECHNICAL CAMPUS"
+    watermark_delay_hours: float
+    late_threshold_hours: float
+    latest_event_timestamp: Optional[str] = None
+    current_watermark_timestamp: Optional[str] = None
+    system_time: str
+    total_events: int
+    late_events_count: int
+    on_time_events_count: int
+    max_delay_hours_observed: float
+    watermark_policy: str = "Bounded Out-Of-Order Event Ingestion (24h Watermark Window)"
+

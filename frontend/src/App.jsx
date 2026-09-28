@@ -6,6 +6,7 @@ import EventsTab from './components/EventsTab';
 import ReviewTab from './components/ReviewTab';
 import AuditTab from './components/AuditTab';
 import ExperimentTab from './components/ExperimentTab';
+import PerformanceTab from './components/PerformanceTab';
 import DemoModal from './components/DemoModal';
 
 import { 
@@ -116,6 +117,10 @@ export default function App() {
 
             {activeTab === 'experiment' && (
               <ExperimentTab />
+            )}
+
+            {activeTab === 'performance' && (
+              <PerformanceTab />
             )}
           </>
         )}

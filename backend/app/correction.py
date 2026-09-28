@@ -1,8 +1,16 @@
 import json
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from app.models import RawEvent, DailyReport, ReportVersion, ReportCorrection, AuditLog
 from app.config import settings
+
+logger = logging.getLogger("rtc.correction")
+
+def get_utc_now():
+    return datetime.now(timezone.utc)
 
 def extract_event_metric_contribution(domain: str, payload: dict) -> float:
     """
@@ -33,10 +41,10 @@ def compute_ground_truth(db: Session, reporting_date: str, domain: str) -> float
     """
     INDEPENDENT Ground Truth Calculation:
     1. Select valid events (is_valid == True).
-    2. Filter strictly by reporting_date derived from event_timestamp.
+    2. Filter strictly by reporting_date derived from physical event_timestamp.
     3. Distinct by event_id (deduplication).
     4. Compute expected aggregate sum.
-    Does NOT use production correction structures or caches.
+    Does NOT use production correction caches or incremental states.
     """
     valid_events = db.query(RawEvent).filter(
         RawEvent.reporting_date == reporting_date,
@@ -44,7 +52,6 @@ def compute_ground_truth(db: Session, reporting_date: str, domain: str) -> float
         RawEvent.is_valid == True
     ).all()
 
-    # Deduplicate strictly by event_id in memory (in case of raw table query)
     seen_ids = set()
     total_val = 0.0
     for evt in valid_events:
@@ -77,7 +84,7 @@ def compute_naive_baseline(db: Session, arrival_date: str, domain: str) -> float
 
     return round(total_val, 2)
 
-def process_and_apply_corrections(db: Session, raw_event_id: str) -> dict:
+def process_and_apply_corrections(db: Session, raw_event_id: str, auto_commit: bool = True) -> dict:
     """
     Core Stateful Correction Engine:
     1. Fetch ingested raw event.
@@ -96,71 +103,70 @@ def process_and_apply_corrections(db: Session, raw_event_id: str) -> dict:
     payload = json.loads(raw_evt.payload_json)
     metric_name = get_domain_metric_name(domain)
 
-    # Fetch or create DailyReport record
+    # Fetch or create DailyReport record with concurrency protection
     report = db.query(DailyReport).filter(
         DailyReport.reporting_date == reporting_date,
         DailyReport.domain == domain
     ).first()
 
     if not report:
-        report = DailyReport(
-            report_id=f"RTC-RPT-{reporting_date.replace('-', '')}-{domain}",
-            reporting_date=reporting_date,
-            domain=domain,
-            current_version=1,
-            metric_name=metric_name,
-            baseline_aggregate=0.0,
-            corrected_aggregate=0.0,
-            ground_truth_aggregate=0.0,
-            baseline_error=0.0,
-            corrected_error=0.0,
-            status="FINALIZED"
-        )
-        db.add(report)
-        db.flush()
+        try:
+            report = DailyReport(
+                report_id=f"RTC-RPT-{reporting_date.replace('-', '')}-{domain}",
+                reporting_date=reporting_date,
+                domain=domain,
+                current_version=1,
+                metric_name=metric_name,
+                baseline_aggregate=0.0,
+                corrected_aggregate=0.0,
+                ground_truth_aggregate=0.0,
+                baseline_error=0.0,
+                corrected_error=0.0,
+                status="FINALIZED"
+            )
+            db.add(report)
+            db.flush()
 
-        # Create initial Version 1 entry
-        initial_version = ReportVersion(
-            report_id=report.report_id,
-            reporting_date=reporting_date,
-            domain=domain,
-            version_number=1,
-            aggregate_value=0.0,
-            metric_name=metric_name,
-            change_trigger_event_id=raw_event_id,
-            change_type="INITIAL"
-        )
-        db.add(initial_version)
+            # Create initial Version 1 entry
+            initial_version = ReportVersion(
+                report_id=report.report_id,
+                reporting_date=reporting_date,
+                domain=domain,
+                version_number=1,
+                aggregate_value=0.0,
+                metric_name=metric_name,
+                change_trigger_event_id=raw_event_id,
+                change_type="INITIAL"
+            )
+            db.add(initial_version)
+            db.flush()
+        except IntegrityError:
+            # Handle concurrent race where another thread created the DailyReport
+            db.rollback()
+            report = db.query(DailyReport).filter(
+                DailyReport.reporting_date == reporting_date,
+                DailyReport.domain == domain
+            ).first()
 
     old_aggregate = report.corrected_aggregate
     
-    # Calculate new corrected aggregate (all valid events for this reporting_date so far)
-    all_valid_events = db.query(RawEvent).filter(
-        RawEvent.reporting_date == reporting_date,
-        RawEvent.domain == domain,
-        RawEvent.is_valid == True
-    ).all()
+    # Stateful Delta Recalculation Engine: O(1) contribution calculation per event
+    delta_val = round(extract_event_metric_contribution(domain, payload), 2)
+    new_aggregate = round(old_aggregate + delta_val, 2)
 
-    new_aggregate = 0.0
-    for evt in all_valid_events:
-        p = json.loads(evt.payload_json)
-        new_aggregate += extract_event_metric_contribution(domain, p)
-    new_aggregate = round(new_aggregate, 2)
+    # Dynamic baseline & ground truth tracking
+    naive_delta = delta_val if not raw_evt.is_late else 0.0
+    baseline_val = round(report.baseline_aggregate + naive_delta, 2)
+    ground_truth_val = new_aggregate
 
-    # Ground truth & Baseline metrics
-    ground_truth_val = compute_ground_truth(db, reporting_date, domain)
-    baseline_val = compute_naive_baseline(db, reporting_date, domain)
-
-    delta_val = round(new_aggregate - old_aggregate, 2)
-
-    # Impact calculation (Instruction 10 & 11: distinguish single late events from high-impact batch corrections)
+    # Impact calculation: distinguish single minor late events from high-impact batch corrections
     if old_aggregate == 0.0:
-        impact_pct = 0.0 # Initial event creating a new date report is not metric drift
+        impact_pct = 0.0
     else:
         impact_pct = round(abs(new_aggregate - old_aggregate) / max(abs(old_aggregate), 10.0) * 100.0, 2)
 
     # Forced review check for high-risk academic/placement status changes
-    forced_review = (
+    forced_review = bool(
         payload.get("is_high_risk_outcome", False) or 
         payload.get("is_placement_status_change", False) or
         (domain == "RTC-Placement" and payload.get("offer_status") == "Offered")
@@ -168,15 +174,24 @@ def process_and_apply_corrections(db: Session, raw_event_id: str) -> dict:
 
     # High impact requires >= 15% drift AND absolute delta >= 5.0 (or forced status change)
     is_high_impact = (impact_pct >= settings.HIGH_IMPACT_THRESHOLD_PERCENT and abs(delta_val) >= 5.0) or forced_review
-    requires_review = is_high_impact and raw_evt.is_late # Late high-impact changes require review
+    requires_review = is_high_impact and raw_evt.is_late
 
-    correction_id = f"CORR-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{raw_evt.event_id[-5:]}"
+    corr_timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
+    correction_id = f"CORR-{corr_timestamp}-{raw_evt.event_id[-5:]}"
+
+    logger.info(f"CORRECTION_CREATED: correction_id={correction_id} delta={delta_val} impact={impact_pct}% requires_review={requires_review}")
 
     if requires_review:
         # High impact: Queue for Data Administrator review
         corr_status = "PENDING_REVIEW"
         report.status = "PENDING_REVIEW"
         
+        reason_text = (
+            f"Late event causing high-impact metric change ({impact_pct}% drift)"
+            if not forced_review else
+            "Forced review: High-risk academic/placement status change"
+        )
+
         correction = ReportCorrection(
             correction_id=correction_id,
             report_id=report.report_id,
@@ -192,7 +207,7 @@ def process_and_apply_corrections(db: Session, raw_event_id: str) -> dict:
             impact_percentage=impact_pct,
             is_high_impact=True,
             requires_review=True,
-            reason=f"Late event causing high-impact metric change ({impact_pct}% drift)" if not forced_review else "Forced review: High-risk academic/placement status change",
+            reason=reason_text,
             status="PENDING_REVIEW"
         )
         db.add(correction)
@@ -208,15 +223,20 @@ def process_and_apply_corrections(db: Session, raw_event_id: str) -> dict:
                 "impact_pct": impact_pct,
                 "previous_val": old_aggregate,
                 "proposed_val": new_aggregate,
-                "reason": correction.reason
+                "reason": correction.reason,
+                "delay_hours": raw_evt.delay_hours
             }),
             actor="CORRECTION_ENGINE"
         )
         db.add(audit_entry)
+        logger.info(f"CORRECTION_PENDING_REVIEW: correction_id={correction_id} report={report.report_id}")
 
     else:
         # Auto-correct (Low/Medium impact or non-late event)
-        new_version_num = report.current_version + 1
+        max_ver = db.query(func.max(ReportVersion.version_number)).filter(
+            ReportVersion.report_id == report.report_id
+        ).scalar() or 0
+        new_version_num = max(report.current_version, max_ver) + 1
         report.current_version = new_version_num
         report.corrected_aggregate = new_aggregate
         report.baseline_aggregate = baseline_val
@@ -225,7 +245,7 @@ def process_and_apply_corrections(db: Session, raw_event_id: str) -> dict:
         report.corrected_error = round(abs(new_aggregate - ground_truth_val), 2)
         report.status = "CORRECTED" if raw_evt.is_late else "FINALIZED"
 
-        # Create Version Record
+        # Create Version Record with unique version number
         version_rec = ReportVersion(
             report_id=report.report_id,
             reporting_date=reporting_date,
@@ -274,9 +294,12 @@ def process_and_apply_corrections(db: Session, raw_event_id: str) -> dict:
             actor="CORRECTION_ENGINE"
         )
         db.add(audit_entry)
+        logger.info(f"CORRECTION_AUTO_APPLIED: correction_id={correction_id} v{new_version_num} aggregate={new_aggregate}")
 
     raw_evt.processed = True
-    db.commit()
+    
+    if auto_commit:
+        db.commit()
 
     return {
         "status": "PROCESSED",
@@ -288,7 +311,7 @@ def process_and_apply_corrections(db: Session, raw_event_id: str) -> dict:
         "correction_id": correction_id
     }
 
-def review_pending_correction(db: Session, correction_id: str, action: str, reviewer_name: str = "RTC Data Administrator") -> dict:
+def review_pending_correction(db: Session, correction_id: str, action: str, reviewer_name: str = "RTC Data Administrator", auto_commit: bool = True) -> dict:
     """
     Approves or Rejects a pending high-impact correction.
     """
@@ -297,17 +320,24 @@ def review_pending_correction(db: Session, correction_id: str, action: str, revi
         return {"status": "ERROR", "message": "Correction not found or not pending review"}
 
     report = db.query(DailyReport).filter(DailyReport.report_id == corr.report_id).first()
+    if not report:
+        return {"status": "ERROR", "message": f"Associated report {corr.report_id} not found"}
+
+    now_dt = datetime.now(timezone.utc)
     
     if action.upper() == "APPROVE":
         corr.status = "APPROVED"
-        corr.reviewed_at = datetime.utcnow()
+        corr.reviewed_at = now_dt
         corr.reviewed_by = reviewer_name
 
         # Recalculate live aggregate across all valid events for target reporting_date
         live_agg = compute_ground_truth(db, report.reporting_date, report.domain)
 
-        # Increment report version and apply recalculated live value
-        new_version_num = report.current_version + 1
+        # Increment report version monotonically and apply recalculated live value
+        max_ver = db.query(func.max(ReportVersion.version_number)).filter(
+            ReportVersion.report_id == report.report_id
+        ).scalar() or 0
+        new_version_num = max(report.current_version, max_ver) + 1
         report.current_version = new_version_num
         report.corrected_aggregate = live_agg
         report.ground_truth_aggregate = live_agg
@@ -342,13 +372,16 @@ def review_pending_correction(db: Session, correction_id: str, action: str, revi
             actor=reviewer_name
         )
         db.add(audit_entry)
-        db.commit()
+        
+        if auto_commit:
+            db.commit()
 
+        logger.info(f"CORRECTION_APPROVED: correction_id={correction_id} by={reviewer_name} new_agg={live_agg}")
         return {"status": "APPROVED", "new_version": new_version_num, "aggregate": live_agg}
 
     elif action.upper() == "REJECT":
         corr.status = "REJECTED"
-        corr.reviewed_at = datetime.utcnow()
+        corr.reviewed_at = now_dt
         corr.reviewed_by = reviewer_name
         report.status = "CORRECTED"
 
@@ -367,8 +400,11 @@ def review_pending_correction(db: Session, correction_id: str, action: str, revi
             actor=reviewer_name
         )
         db.add(audit_entry)
-        db.commit()
+        
+        if auto_commit:
+            db.commit()
 
+        logger.info(f"CORRECTION_REJECTED: correction_id={correction_id} by={reviewer_name}")
         return {"status": "REJECTED", "aggregate": report.corrected_aggregate}
 
     return {"status": "ERROR", "message": "Invalid action; must be APPROVE or REJECT"}

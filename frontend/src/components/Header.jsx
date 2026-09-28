@@ -8,7 +8,8 @@ export default function Header({ metrics, onRunDemo, isRunningDemo, activeTab, s
     { id: 'events', label: 'Events' },
     { id: 'review', label: 'Review', count: metrics?.pending_reviews },
     { id: 'audit', label: 'Audit' },
-    { id: 'experiment', label: 'Experiment' }
+    { id: 'experiment', label: 'Experiments' },
+    { id: 'performance', label: 'Engine & Benchmarks' }
   ];
 
   return (

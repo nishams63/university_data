@@ -13,8 +13,8 @@
     "baseline_rmse": 93.5004,
     "corrected_rmse": 0.0,
     "exact_match_pct": 100.0,
-    "processing_time_ms": 2202.41,
-    "created_at": "2026-08-27T10:11:53.598165"
+    "processing_time_ms": 2222.8,
+    "created_at": "2026-09-28T15:28:53.876192"
   },
   {
     "experiment_id": "EXP-42-SCENARIO_2_5%_LATE_EVENTS",
@@ -30,8 +30,8 @@
     "baseline_rmse": 101.6726,
     "corrected_rmse": 0.0,
     "exact_match_pct": 100.0,
-    "processing_time_ms": 1922.36,
-    "created_at": "2026-08-27T10:11:55.589607"
+    "processing_time_ms": 2362.55,
+    "created_at": "2026-09-28T15:28:56.327276"
   },
   {
     "experiment_id": "EXP-42-SCENARIO_3_10%_LATE_EVENTS",
@@ -47,8 +47,8 @@
     "baseline_rmse": 119.6719,
     "corrected_rmse": 0.0,
     "exact_match_pct": 100.0,
-    "processing_time_ms": 1956.08,
-    "created_at": "2026-08-27T10:11:57.636740"
+    "processing_time_ms": 2313.1,
+    "created_at": "2026-09-28T15:28:58.756809"
   },
   {
     "experiment_id": "EXP-42-SCENARIO_4_25%_LATE_EVENTS",
@@ -64,8 +64,8 @@
     "baseline_rmse": 213.7166,
     "corrected_rmse": 0.0,
     "exact_match_pct": 100.0,
-    "processing_time_ms": 1798.75,
-    "created_at": "2026-08-27T10:11:59.592639"
+    "processing_time_ms": 2321.04,
+    "created_at": "2026-09-28T15:29:01.379573"
   },
   {
     "experiment_id": "EXP-42-SCENARIO_5_DUPLICATE_EVENTS",
@@ -81,8 +81,8 @@
     "baseline_rmse": 130.4597,
     "corrected_rmse": 0.0,
     "exact_match_pct": 100.0,
-    "processing_time_ms": 1634.28,
-    "created_at": "2026-08-27T10:12:01.357589"
+    "processing_time_ms": 2228.08,
+    "created_at": "2026-09-28T15:29:03.771627"
   },
   {
     "experiment_id": "EXP-42-SCENARIO_6_VERY_LATE_EVENTS",
@@ -98,7 +98,7 @@
     "baseline_rmse": 222.374,
     "corrected_rmse": 0.0,
     "exact_match_pct": 100.0,
-    "processing_time_ms": 1886.31,
-    "created_at": "2026-08-27T10:12:03.383880"
+    "processing_time_ms": 2561.53,
+    "created_at": "2026-09-28T15:29:06.752462"
   }
 ]

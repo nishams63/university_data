@@ -1,0 +1,124 @@
+{
+  "benchmark_timestamp": "2026-09-28T15:28:03.441793+00:00",
+  "institution": "RATHINAM TECHNICAL CAMPUS (AUTONOMOUS)",
+  "environment": {
+    "database_engine": "SQLite 3 with Write-Ahead Logging (WAL)",
+    "journal_mode": "wal",
+    "busy_timeout_ms": 10000,
+    "synchronous_mode": "NORMAL",
+    "concurrency_model": "Multi-threaded with atomic transaction boundaries and monotonic versioning"
+  },
+  "event_scaling_benchmarks": [
+    {
+      "event_count": 100,
+      "duration_seconds": 2.2981,
+      "events_per_second": 43.51,
+      "avg_latency_ms": 22.975,
+      "median_latency_ms": 21.799,
+      "p95_latency_ms": 36.876,
+      "p99_latency_ms": 137.138,
+      "late_correction_avg_latency_ms": 23.132,
+      "reconciliation_duration_ms": 123.45,
+      "peak_memory_mb": 0.978,
+      "database_size_kb": 380.0,
+      "successful_ingest_count": 90,
+      "duplicate_discard_count": 8,
+      "invalid_discard_count": 2,
+      "exact_match_percentage": 100.0
+    },
+    {
+      "event_count": 500,
+      "duration_seconds": 10.575,
+      "events_per_second": 47.28,
+      "avg_latency_ms": 21.144,
+      "median_latency_ms": 20.499,
+      "p95_latency_ms": 33.66,
+      "p99_latency_ms": 46.439,
+      "late_correction_avg_latency_ms": 21.71,
+      "reconciliation_duration_ms": 242.07,
+      "peak_memory_mb": 0.438,
+      "database_size_kb": 1356.0,
+      "successful_ingest_count": 450,
+      "duplicate_discard_count": 40,
+      "invalid_discard_count": 10,
+      "exact_match_percentage": 100.0
+    },
+    {
+      "event_count": 1000,
+      "duration_seconds": 21.7888,
+      "events_per_second": 45.9,
+      "avg_latency_ms": 21.782,
+      "median_latency_ms": 20.635,
+      "p95_latency_ms": 37.259,
+      "p99_latency_ms": 52.97,
+      "late_correction_avg_latency_ms": 23.998,
+      "reconciliation_duration_ms": 409.21,
+      "peak_memory_mb": 0.45,
+      "database_size_kb": 2552.0,
+      "successful_ingest_count": 900,
+      "duplicate_discard_count": 80,
+      "invalid_discard_count": 20,
+      "exact_match_percentage": 100.0
+    },
+    {
+      "event_count": 5000,
+      "duration_seconds": 192.8531,
+      "events_per_second": 25.93,
+      "avg_latency_ms": 38.56,
+      "median_latency_ms": 32.77,
+      "p95_latency_ms": 70.798,
+      "p99_latency_ms": 116.053,
+      "late_correction_avg_latency_ms": 43.106,
+      "reconciliation_duration_ms": 2031.32,
+      "peak_memory_mb": 0.572,
+      "database_size_kb": 11644.0,
+      "successful_ingest_count": 4500,
+      "duplicate_discard_count": 400,
+      "invalid_discard_count": 100,
+      "exact_match_percentage": 100.0
+    }
+  ],
+  "historical_replay_benchmark": {
+    "total_replay_events": 4000,
+    "total_replay_duration_seconds": 51.647,
+    "overall_replay_throughput_eps": 77.45,
+    "profiles": [
+      {
+        "profile": "Normal Institutional Stream",
+        "events_replayed": 1000,
+        "duration_seconds": 31.527,
+        "events_per_second": 31.72,
+        "avg_latency_ms": 31.519,
+        "p95_latency_ms": 53.116,
+        "peak_memory_mb": 0.419
+      },
+      {
+        "profile": "Late-Event-Heavy Stream",
+        "events_replayed": 1000,
+        "duration_seconds": 7.5,
+        "events_per_second": 133.33,
+        "avg_latency_ms": 7.49,
+        "p95_latency_ms": 11.733,
+        "peak_memory_mb": 0.065
+      },
+      {
+        "profile": "Duplicate-Heavy Stream",
+        "events_replayed": 1000,
+        "duration_seconds": 6.111,
+        "events_per_second": 163.63,
+        "avg_latency_ms": 6.103,
+        "p95_latency_ms": 7.961,
+        "peak_memory_mb": 0.064
+      },
+      {
+        "profile": "7-Day Delayed Ingestion Lag",
+        "events_replayed": 1000,
+        "duration_seconds": 6.508,
+        "events_per_second": 153.66,
+        "avg_latency_ms": 6.499,
+        "p95_latency_ms": 9.22,
+        "peak_memory_mb": 0.065
+      }
+    ]
+  }
+}

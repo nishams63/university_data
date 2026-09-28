@@ -109,3 +109,14 @@ export async function runExperimentsOnDemand() {
   });
   return res.json();
 }
+
+export async function fetchWatermarkStatus() {
+  const res = await fetch(`${API_BASE}/watermark`);
+  return res.json();
+}
+
+export async function fetchPerformanceMetrics() {
+  const res = await fetch(`${API_BASE}/metrics/performance`);
+  return res.json();
+}
+

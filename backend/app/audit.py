@@ -1,25 +1,31 @@
 import json
-from datetime import datetime
+import logging
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.models import DailyReport, ReportVersion, ReportCorrection, AuditLog
 from app.correction import compute_ground_truth
+
+logger = logging.getLogger("rtc.audit")
 
 def execute_rollback(
     db: Session,
     correction_id: str,
     reason: str = "Data Administrator Manual Rollback",
-    actor: str = "RTC Data Administrator"
+    actor: str = "RTC Data Administrator",
+    auto_commit: bool = True
 ) -> dict:
     """
-    Executes a compensating rollback for a target correction.
+    Executes an atomic compensating rollback for a target correction.
     Idempotent guard: Prevents rolling back an already rolled-back correction.
-    Appends a new report version history record without modifying old history.
+    Appends a new report version history record without modifying or deleting old history.
     """
     corr = db.query(ReportCorrection).filter(ReportCorrection.correction_id == correction_id).first()
     if not corr:
         return {"status": "ERROR", "message": f"Correction {correction_id} not found."}
 
     if corr.is_rolled_back or corr.status == "ROLLED_BACK":
+        logger.warning(f"ROLLBACK_SKIPPED: correction_id={correction_id} already rolled back (idempotent guard).")
         return {
             "status": "ALREADY_ROLLED_BACK",
             "message": f"Correction {correction_id} has already been rolled back. Operation is idempotent.",
@@ -40,8 +46,11 @@ def execute_rollback(
     old_agg = report.corrected_aggregate
     restored_agg = round(corr.previous_value, 2)
     
-    # Increment version
-    new_version_num = report.current_version + 1
+    # Increment version monotonically
+    max_ver = db.query(func.max(ReportVersion.version_number)).filter(
+        ReportVersion.report_id == report.report_id
+    ).scalar() or 0
+    new_version_num = max(report.current_version, max_ver) + 1
     report.current_version = new_version_num
     report.corrected_aggregate = restored_agg
 
@@ -59,7 +68,8 @@ def execute_rollback(
         aggregate_value=restored_agg,
         metric_name=report.metric_name,
         change_trigger_event_id=corr.event_id,
-        change_type="ROLLBACK"
+        change_type="ROLLBACK",
+        created_at=datetime.now(timezone.utc)
     )
     db.add(version_rec)
 
@@ -67,9 +77,9 @@ def execute_rollback(
     corr.is_rolled_back = True
     corr.status = "ROLLED_BACK"
 
-    # Create immutable audit log entry
+    now_ts = int(datetime.now(timezone.utc).timestamp() * 1000)
     audit_entry = AuditLog(
-        log_id=f"LOG-RBK-{correction_id}-{datetime.utcnow().timestamp()}",
+        log_id=f"LOG-RBK-{correction_id}-{now_ts}",
         action="ROLLBACK_EXECUTED",
         domain=report.domain,
         event_id=corr.event_id,
@@ -85,7 +95,11 @@ def execute_rollback(
         actor=actor
     )
     db.add(audit_entry)
-    db.commit()
+    
+    if auto_commit:
+        db.commit()
+
+    logger.info(f"ROLLBACK_CREATED: correction_id={correction_id} reverted_from={old_agg} restored_to={restored_agg} version={new_version_num}")
 
     return {
         "status": "ROLLED_BACK",
