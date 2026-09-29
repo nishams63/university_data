@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.generator import generate_synthetic_event_stream
@@ -72,25 +72,33 @@ def generate_reconciliation_report():
                 })
 
         exact_match_pct = round((matching_dates / max(total_dates, 1)) * 100.0, 2)
+        mae = round(total_abs_error / max(total_dates, 1), 4)
 
         report_data = {
-            "timestamp": datetime.utcnow().isoformat(),
-            "institution": "RATHINAM TECHNICAL CAMPUS",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "institution": "RATHINAM TECHNICAL CAMPUS (AUTONOMOUS)",
             "seed": 42,
+            "dates_evaluated": total_dates,
             "total_reporting_dates": total_dates,
             "matching_dates": matching_dates,
             "mismatching_dates": mismatching_dates,
             "exact_match_percentage": exact_match_pct,
             "total_absolute_error": round(total_abs_error, 4),
+            "mean_absolute_error": mae,
+            "mae": mae,
+            "invariant_status": "SATISFIED" if mismatching_dates == 0 else "VIOLATED",
             "invariant_satisfied": mismatching_dates == 0,
             "mismatches": mismatches_list
         }
 
         report_path = os.path.join(RESULTS_DIR, "reconciliation_report.json")
+        final_path = os.path.join(RESULTS_DIR, "final_reconciliation.json")
         with open(report_path, "w") as f:
             json.dump(report_data, f, indent=2)
+        with open(final_path, "w") as f:
+            json.dump(report_data, f, indent=2)
 
-        print(f"[RTC Reconciliation] Saved reconciliation report to {report_path}")
+        print(f"[RTC Reconciliation] Saved reports to {report_path} and {final_path}")
         print(f" - Total Reporting Dates: {total_dates}")
         print(f" - Matching Dates: {matching_dates}")
         print(f" - Mismatching Dates: {mismatching_dates}")
