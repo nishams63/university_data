@@ -102,6 +102,8 @@ def run_single_dataset_benchmark(num_events: int, seed: int = 42) -> dict:
 
     # Calculate statistics
     latencies_ms.sort()
+    min_latency = min(latencies_ms) if latencies_ms else 0.0
+    max_latency = max(latencies_ms) if latencies_ms else 0.0
     avg_latency = statistics.mean(latencies_ms) if latencies_ms else 0.0
     median_latency = statistics.median(latencies_ms) if latencies_ms else 0.0
     p95_index = int(len(latencies_ms) * 0.95)
@@ -128,6 +130,8 @@ def run_single_dataset_benchmark(num_events: int, seed: int = 42) -> dict:
         "events_per_second": round(events_per_sec, 2),
         "avg_latency_ms": round(avg_latency, 3),
         "median_latency_ms": round(median_latency, 3),
+        "min_latency_ms": round(min_latency, 3),
+        "max_latency_ms": round(max_latency, 3),
         "p95_latency_ms": round(p95_latency, 3),
         "p99_latency_ms": round(p99_latency, 3),
         "late_correction_avg_latency_ms": round(avg_late_latency, 3),
@@ -240,6 +244,7 @@ def run_full_benchmark_suite(seed: int = 42) -> dict:
     replay_summary = run_historical_replay_benchmark(seed=seed)
     print(f"  -> Replay Completed: {replay_summary['overall_replay_throughput_eps']} eps overall throughput.")
 
+    import platform
     full_output = {
         "benchmark_timestamp": datetime.now(timezone.utc).isoformat(),
         "institution": "RATHINAM TECHNICAL CAMPUS (AUTONOMOUS)",
@@ -248,7 +253,12 @@ def run_full_benchmark_suite(seed: int = 42) -> dict:
             "journal_mode": "wal",
             "busy_timeout_ms": 10000,
             "synchronous_mode": "NORMAL",
-            "concurrency_model": "Multi-threaded with atomic transaction boundaries and monotonic versioning"
+            "concurrency_model": "Multi-threaded with atomic transaction boundaries and monotonic versioning",
+            "python_version": platform.python_version(),
+            "operating_system": platform.platform(),
+            "processor_count": os.cpu_count() or 1,
+            "architecture": platform.machine(),
+            "sqlite_version": sqlite3.sqlite_version
         },
         "event_scaling_benchmarks": scaling_results,
         "historical_replay_benchmark": replay_summary
