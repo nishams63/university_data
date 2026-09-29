@@ -115,6 +115,10 @@ class ReportCorrectionResponse(BaseModel):
     reviewed_at: Optional[datetime] = None
     reviewed_by: Optional[str] = None
     is_rolled_back: bool
+    event_timestamp: Optional[str] = None
+    arrival_timestamp: Optional[str] = None
+    delay_hours: Optional[float] = None
+    dynamic_explanation: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -123,6 +127,7 @@ class ReviewActionRequest(BaseModel):
     correction_id: str
     action: str # APPROVE or REJECT
     reviewer_name: Optional[str] = "RTC Data Administrator"
+    reason: Optional[str] = None # Optional reason for rejection or approval justification
 
 class RollbackRequest(BaseModel):
     correction_id: str
@@ -212,4 +217,60 @@ class WatermarkStatusResponse(BaseModel):
     on_time_events_count: int
     max_delay_hours_observed: float
     watermark_policy: str = "Bounded Out-Of-Order Event Ingestion (24h Watermark Window)"
+
+class EventIngestResponse(BaseModel):
+    status: str # INGESTED, DUPLICATE, INVALID
+    event_id: str
+    reporting_date: Optional[str] = None
+    is_late: bool = False
+    is_valid: bool = True
+    message: Optional[str] = None
+    correction_result: Optional[Dict[str, Any]] = None
+
+class ReviewActionResponse(BaseModel):
+    status: str # APPROVED, REJECTED, ERROR, ALREADY_APPROVED, ALREADY_REJECTED
+    correction_id: str
+    action: Optional[str] = None
+    new_version: Optional[int] = None
+    aggregate: Optional[float] = None
+    message: Optional[str] = None
+    reviewer_name: Optional[str] = None
+
+class RollbackResponse(BaseModel):
+    status: str # ROLLED_BACK, ALREADY_ROLLED_BACK, ERROR
+    correction_id: str
+    report_id: Optional[str] = None
+    previous_val: Optional[float] = None
+    restored_val: Optional[float] = None
+    new_version: Optional[int] = None
+    message: str
+
+class ReconciliationMismatch(BaseModel):
+    date: str
+    domain: str
+    corrected: float
+    ground_truth: float
+    error: float
+    event_ids: List[str]
+
+class ReconciliationResponse(BaseModel):
+    institution: str = "RATHINAM TECHNICAL CAMPUS"
+    total_reporting_dates: int
+    matching_dates: int
+    mismatching_dates: int
+    exact_match_percentage: float
+    total_absolute_error: float
+    mean_absolute_error: Optional[float] = 0.0
+    invariant_satisfied: bool
+    mismatches: List[Dict[str, Any]] = []
+    evaluated_at: Optional[str] = None
+
+class HealthStatusSimple(BaseModel):
+    status: str
+    database: str
+    journal_mode: str
+    foreign_keys: bool
+    busy_timeout_ms: int
+    institution: str
+
 

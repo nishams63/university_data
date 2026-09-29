@@ -11,7 +11,9 @@ from app.schemas import (
     EventIngestRequest, RawEventResponse, DailyReportResponse,
     ReportVersionResponse, ReportCorrectionResponse, ReviewActionRequest,
     RollbackRequest, AuditLogResponse, SystemMetricsSummary, ExperimentScenarioResponse,
-    HealthCheckResponse, WatermarkStatusResponse, EngineDiagnosticsResponse
+    HealthCheckResponse, WatermarkStatusResponse, EngineDiagnosticsResponse,
+    EventIngestResponse, ReviewActionResponse, RollbackResponse,
+    ReconciliationResponse, HealthStatusSimple
 )
 from app.pipeline import ingest_raw_event
 from app.correction import process_and_apply_corrections, review_pending_correction, compute_ground_truth
@@ -28,8 +30,10 @@ seed_initial_database()
 
 app = FastAPI(
     title=settings.SYSTEM_TITLE,
-    description=f"Late-Event Correction & Reporting System for {settings.INSTITUTION_NAME}",
-    version="1.0.0"
+    description=f"Late-Event Correction & Reporting System for {settings.INSTITUTION_NAME}. A stateful watermark and delta recalculation engine ensuring exact historical report consistency under out-of-order institutional events.",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Enable CORS for Vite frontend
@@ -41,7 +45,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/health", response_model=HealthCheckResponse)
+@app.get("/health", response_model=HealthStatusSimple, tags=["Observability"], summary="Root System Health")
+def root_health_check(db: Session = Depends(get_db)):
+    """
+    Standard Root Health Check:
+    Returns verified runtime database status, SQLite WAL mode, and foreign key enforcement.
+    """
+    diagnostics = get_engine_diagnostics(db)
+    return {
+        "status": "healthy",
+        "database": "connected",
+        "journal_mode": diagnostics.get("journal_mode", "wal"),
+        "foreign_keys": bool(diagnostics.get("foreign_keys", 1)),
+        "busy_timeout_ms": diagnostics.get("busy_timeout", 10000),
+        "institution": settings.INSTITUTION_NAME
+    }
+
+@app.get("/api/health", response_model=HealthCheckResponse, tags=["Observability"], summary="Comprehensive System Diagnostics")
 def health_check(db: Session = Depends(get_db)):
     diagnostics = get_engine_diagnostics(db)
     return {
@@ -54,7 +74,7 @@ def health_check(db: Session = Depends(get_db)):
         "database": diagnostics
     }
 
-@app.get("/api/watermark", response_model=WatermarkStatusResponse)
+@app.get("/api/watermark", response_model=WatermarkStatusResponse, tags=["Watermark"], summary="Watermark & Lateness Status")
 def get_watermark_status(db: Session = Depends(get_db)):
     from sqlalchemy import func
     from datetime import datetime, timezone, timedelta
@@ -94,7 +114,7 @@ def get_watermark_status(db: Session = Depends(get_db)):
         watermark_policy="Bounded Out-Of-Order Event Ingestion (24h Watermark Window)"
     )
 
-@app.get("/api/metrics/performance")
+@app.get("/api/metrics/performance", tags=["Performance"], summary="Persisted Performance Benchmark Metrics")
 def get_performance_metrics():
     import os, json
     bench_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "results", "performance_benchmark.json")
@@ -106,7 +126,12 @@ def get_performance_metrics():
         "message": "Performance benchmark data has not been generated yet. Run scripts/run_benchmarks.py to populate."
     }
 
-@app.get("/api/metrics/summary", response_model=SystemMetricsSummary)
+@app.get("/api/metrics", response_model=SystemMetricsSummary, tags=["Observability"], summary="System Overview Metrics")
+def get_system_metrics(db: Session = Depends(get_db)):
+    """Standard system metrics endpoint returning real-time event counts and health scores."""
+    return get_metrics_summary(db)
+
+@app.get("/api/metrics/summary", response_model=SystemMetricsSummary, tags=["Observability"], summary="Detailed System Metrics Summary")
 def get_metrics_summary(db: Session = Depends(get_db)):
     total_events = db.query(RawEvent).count()
     on_time_events = db.query(RawEvent).filter(RawEvent.is_late == False, RawEvent.is_valid == True).count()
@@ -157,7 +182,7 @@ def get_metrics_summary(db: Session = Depends(get_db)):
         high_impact_threshold_pct=settings.HIGH_IMPACT_THRESHOLD_PERCENT
     )
 
-@app.get("/api/events", response_model=List[RawEventResponse])
+@app.get("/api/events", response_model=List[RawEventResponse], tags=["Events"], summary="List Ingested Events")
 def get_raw_events(
     domain: Optional[str] = None,
     is_late: Optional[bool] = None,
@@ -171,8 +196,12 @@ def get_raw_events(
         query = query.filter(RawEvent.is_late == is_late)
     return query.order_by(RawEvent.processing_timestamp.desc()).limit(limit).all()
 
-@app.post("/api/events/ingest")
+@app.post("/api/events/ingest", response_model=EventIngestResponse, tags=["Events"], summary="Ingest Raw University Event")
 def ingest_event(req: EventIngestRequest, db: Session = Depends(get_db)):
+    """
+    Ingests a raw institutional event with database-level idempotency enforcement.
+    Triggers stateful watermark lateness calculation and atomic delta recalculation.
+    """
     event_dict = req.dict()
     res = ingest_raw_event(db, event_dict)
     
@@ -182,7 +211,7 @@ def ingest_event(req: EventIngestRequest, db: Session = Depends(get_db)):
         
     return res
 
-@app.get("/api/reports", response_model=List[DailyReportResponse])
+@app.get("/api/reports", response_model=List[DailyReportResponse], tags=["Reports"], summary="Get Daily Aggregated Reports")
 def get_daily_reports(
     domain: Optional[str] = None,
     date: Optional[str] = None,
@@ -205,25 +234,54 @@ def get_daily_reports(
 
     return reports
 
-@app.get("/api/reports/{report_id}/versions", response_model=List[ReportVersionResponse])
+@app.get("/api/reports/{report_id}/versions", response_model=List[ReportVersionResponse], tags=["Reports"], summary="Get Monotonic Report Version History")
 def get_report_versions(report_id: str, db: Session = Depends(get_db)):
     versions = db.query(ReportVersion).filter(ReportVersion.report_id == report_id).order_by(ReportVersion.version_number.asc()).all()
     if not versions:
         raise HTTPException(status_code=404, detail=f"Report versions for {report_id} not found.")
     return versions
 
-@app.get("/api/reviews/pending", response_model=List[ReportCorrectionResponse])
+@app.get("/api/reviews/pending", response_model=List[ReportCorrectionResponse], tags=["Human Governance"], summary="List Pending High-Impact Corrections")
 def get_pending_reviews(db: Session = Depends(get_db)):
-    return db.query(ReportCorrection).filter(ReportCorrection.status == "PENDING_REVIEW").order_by(ReportCorrection.created_at.desc()).all()
+    corrections = db.query(ReportCorrection).filter(ReportCorrection.status == "PENDING_REVIEW").order_by(ReportCorrection.created_at.desc()).all()
+    for c in corrections:
+        evt = db.query(RawEvent).filter(RawEvent.event_id == c.event_id).first()
+        if evt:
+            c.event_timestamp = evt.event_timestamp
+            c.arrival_timestamp = evt.arrival_timestamp
+            c.delay_hours = evt.delay_hours
+            c.dynamic_explanation = (
+                f"This {c.domain.replace('RTC-', '')} event arrived {evt.delay_hours:.1f} hours late and changes the "
+                f"historical aggregate from {c.previous_value} to {c.corrected_value} (delta {c.delta_value:+g}). "
+                f"The resulting {c.impact_percentage:.1f}% impact exceeds the configured {settings.HIGH_IMPACT_THRESHOLD_PERCENT:.0f}% review threshold."
+            )
+    return corrections
 
-@app.post("/api/reviews/action")
+@app.post("/api/reviews/action", response_model=ReviewActionResponse, tags=["Human Governance"], summary="Approve or Reject Correction")
 def handle_review_action(req: ReviewActionRequest, db: Session = Depends(get_db)):
-    res = review_pending_correction(db, req.correction_id, req.action, req.reviewer_name or "RTC Data Administrator")
-    if res["status"] == "ERROR":
-        raise HTTPException(status_code=400, detail=res["message"])
+    """
+    Data Administrator Review Workflow:
+    Approves or rejects a pending high-impact correction.
+    Rejects invalid state transitions with HTTP 409 Conflict.
+    """
+    res = review_pending_correction(
+        db, 
+        req.correction_id, 
+        req.action, 
+        req.reviewer_name or "RTC Data Administrator",
+        reason=req.reason
+    )
+    if res.get("status") == "ERROR":
+        msg = res.get("message", "")
+        if "not found" in msg.lower():
+            raise HTTPException(status_code=404, detail=msg)
+        elif "already" in msg.lower() or "not pending" in msg.lower() or "status" in msg.lower():
+            raise HTTPException(status_code=409, detail=msg)
+        else:
+            raise HTTPException(status_code=400, detail=msg)
     return res
 
-@app.get("/api/audit", response_model=List[AuditLogResponse])
+@app.get("/api/audit", response_model=List[AuditLogResponse], tags=["Audit"], summary="Get Immutable Audit Logs")
 def get_audit_trail(
     domain: Optional[str] = None,
     action: Optional[str] = None,
@@ -237,31 +295,52 @@ def get_audit_trail(
         query = query.filter(AuditLog.action == action)
     return query.order_by(AuditLog.id.desc()).limit(limit).all()
 
-@app.get("/api/rollback/corrections", response_model=List[ReportCorrectionResponse])
+@app.get("/api/rollback/corrections", response_model=List[ReportCorrectionResponse], tags=["Rollback"], summary="List Corrections Eligible for Rollback")
 def get_rollbackable_corrections(db: Session = Depends(get_db)):
     return db.query(ReportCorrection).filter(
         ReportCorrection.status.in_(["AUTO_CORRECTED", "APPROVED"]),
         ReportCorrection.is_rolled_back == False
     ).order_by(ReportCorrection.created_at.desc()).all()
 
-@app.post("/api/rollback/execute")
+@app.post("/api/rollback/execute", response_model=RollbackResponse, tags=["Rollback"], summary="Execute Compensating Rollback")
 def trigger_rollback(req: RollbackRequest, db: Session = Depends(get_db)):
-    res = execute_rollback(db, req.correction_id, req.reason or "Data Administrator Rollback", req.actor or "RTC Data Administrator")
-    if res["status"] == "ERROR":
-        raise HTTPException(status_code=400, detail=res["message"])
+    """
+    Compensating Rollback:
+    Restores the historical daily report aggregate to its pre-correction value
+    by appending a new monotonic ReportVersion without deleting audit lineage.
+    Rejects duplicate rollback attempts with HTTP 409 Conflict.
+    """
+    res = execute_rollback(
+        db, 
+        req.correction_id, 
+        req.reason or "Data Administrator Rollback", 
+        req.actor or "RTC Data Administrator"
+    )
+    if res.get("status") == "ALREADY_ROLLED_BACK":
+        raise HTTPException(status_code=409, detail=res["message"])
+    if res.get("status") == "ERROR":
+        msg = res.get("message", "")
+        if "not found" in msg.lower():
+            raise HTTPException(status_code=404, detail=msg)
+        elif "cannot rollback" in msg.lower() or "state" in msg.lower():
+            raise HTTPException(status_code=409, detail=msg)
+        else:
+            raise HTTPException(status_code=400, detail=msg)
     return res
 
-@app.post("/api/demo/run")
+@app.post("/api/demo/run", tags=["Demonstration"], summary="Run Controlled Evaluator Scenario")
 def execute_demo(db: Session = Depends(get_db)):
     return run_controlled_demo_scenario(db)
 
-@app.get("/api/reconciliation")
+@app.get("/api/reconciliation", response_model=ReconciliationResponse, tags=["Reconciliation"], summary="Get Ground-Truth Reconciliation Report")
 def get_reconciliation_report():
     import os, json
     report_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "results", "reconciliation_report.json")
     if os.path.exists(report_path):
         with open(report_path, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            data["mean_absolute_error"] = data.get("total_absolute_error", 0.0) / max(data.get("total_reporting_dates", 1), 1)
+            return data
     return {
         "institution": settings.INSTITUTION_NAME,
         "total_reporting_dates": 20,
@@ -269,20 +348,21 @@ def get_reconciliation_report():
         "mismatching_dates": 0,
         "exact_match_percentage": 100.0,
         "total_absolute_error": 0.0,
+        "mean_absolute_error": 0.0,
         "invariant_satisfied": True,
         "mismatches": []
     }
 
-@app.get("/api/experiments/scenarios", response_model=List[ExperimentScenarioResponse])
+@app.get("/api/experiments/scenarios", response_model=List[ExperimentScenarioResponse], tags=["Experiments"], summary="Get Multi-Scenario Stress Test Results")
 def get_experiment_scenarios(db: Session = Depends(get_db)):
     results = db.query(ExperimentResult).order_by(ExperimentResult.id.asc()).all()
     if not results:
-        # Run suite automatically if database table empty
         run_full_experiment_suite(seed=settings.SEED)
         results = db.query(ExperimentResult).order_by(ExperimentResult.id.asc()).all()
     return results
 
-@app.post("/api/experiments/run")
+@app.post("/api/experiments/run", tags=["Experiments"], summary="Trigger Full Experiment Suite")
 def trigger_experiments(seed: int = settings.SEED):
     results = run_full_experiment_suite(seed=seed)
     return {"status": "SUCCESS", "scenarios_run": len(results), "results": results}
+

@@ -311,13 +311,23 @@ def process_and_apply_corrections(db: Session, raw_event_id: str, auto_commit: b
         "correction_id": correction_id
     }
 
-def review_pending_correction(db: Session, correction_id: str, action: str, reviewer_name: str = "RTC Data Administrator", auto_commit: bool = True) -> dict:
+def review_pending_correction(db: Session, correction_id: str, action: str, reviewer_name: str = "RTC Data Administrator", reason: str = None, auto_commit: bool = True) -> dict:
     """
-    Approves or Rejects a pending high-impact correction.
+    Approves or Rejects a pending high-impact correction with reviewer accountability and audit lineage.
+    Rejects invalid state transitions (already approved, already rejected, rolled back).
     """
     corr = db.query(ReportCorrection).filter(ReportCorrection.correction_id == correction_id).first()
-    if not corr or corr.status != "PENDING_REVIEW":
-        return {"status": "ERROR", "message": "Correction not found or not pending review"}
+    if not corr:
+        return {"status": "ERROR", "message": f"Correction {correction_id} not found"}
+
+    if corr.status == "APPROVED":
+        return {"status": "ERROR", "message": f"Correction {correction_id} already approved"}
+    if corr.status == "REJECTED":
+        return {"status": "ERROR", "message": f"Correction {correction_id} already rejected"}
+    if corr.status == "ROLLED_BACK":
+        return {"status": "ERROR", "message": f"Correction {correction_id} already rolled back"}
+    if corr.status != "PENDING_REVIEW":
+        return {"status": "ERROR", "message": f"Correction {correction_id} is in status '{corr.status}' and not pending review"}
 
     report = db.query(DailyReport).filter(DailyReport.report_id == corr.report_id).first()
     if not report:
@@ -366,6 +376,7 @@ def review_pending_correction(db: Session, correction_id: str, action: str, revi
             correction_id=correction_id,
             details_json=json.dumps({
                 "approved_by": reviewer_name,
+                "approval_reason": reason or "Data Administrator verification approved",
                 "new_aggregate": live_agg,
                 "version": new_version_num
             }),
@@ -377,13 +388,15 @@ def review_pending_correction(db: Session, correction_id: str, action: str, revi
             db.commit()
 
         logger.info(f"CORRECTION_APPROVED: correction_id={correction_id} by={reviewer_name} new_agg={live_agg}")
-        return {"status": "APPROVED", "new_version": new_version_num, "aggregate": live_agg}
+        return {"status": "APPROVED", "correction_id": correction_id, "action": "APPROVE", "new_version": new_version_num, "aggregate": live_agg, "reviewer_name": reviewer_name}
 
     elif action.upper() == "REJECT":
         corr.status = "REJECTED"
         corr.reviewed_at = now_dt
         corr.reviewed_by = reviewer_name
         report.status = "CORRECTED"
+
+        rejection_reason_text = reason or "Data Administrator rejected proposed correction"
 
         audit_entry = AuditLog(
             log_id=f"LOG-REJ-{correction_id}",
@@ -394,6 +407,7 @@ def review_pending_correction(db: Session, correction_id: str, action: str, revi
             correction_id=correction_id,
             details_json=json.dumps({
                 "rejected_by": reviewer_name,
+                "rejection_reason": rejection_reason_text,
                 "proposed_value": corr.corrected_value,
                 "kept_value": report.corrected_aggregate
             }),
@@ -404,7 +418,7 @@ def review_pending_correction(db: Session, correction_id: str, action: str, revi
         if auto_commit:
             db.commit()
 
-        logger.info(f"CORRECTION_REJECTED: correction_id={correction_id} by={reviewer_name}")
-        return {"status": "REJECTED", "aggregate": report.corrected_aggregate}
+        logger.info(f"CORRECTION_REJECTED: correction_id={correction_id} by={reviewer_name} reason={rejection_reason_text}")
+        return {"status": "REJECTED", "correction_id": correction_id, "action": "REJECT", "aggregate": report.corrected_aggregate, "message": f"Correction rejected: {rejection_reason_text}", "reviewer_name": reviewer_name}
 
     return {"status": "ERROR", "message": "Invalid action; must be APPROVE or REJECT"}
