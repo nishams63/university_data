@@ -27,6 +27,9 @@ dist/
 .env.*
 !.env.example
 
+*.db-wal
+*.db-shm
+
 # IDE & OS
 .vscode/
 .idea/
@@ -35,3 +38,4 @@ Thumbs.db
 *.log
 .playwright-mcp/
 *.png
+!docs/review3-evidence/*.png
