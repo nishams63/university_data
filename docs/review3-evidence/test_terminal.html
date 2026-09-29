@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Automated Pytest Suite Execution Evidence</title>
+  <style>
+    body { background-color: #0f172a; color: #f8fafc; font-family: 'Consolas', 'Courier New', monospace; padding: 30px; margin: 0; }
+    .window { background-color: #1e293b; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; overflow: hidden; }
+    .header { background-color: #0f172a; padding: 12px 20px; display: flex; align-items: center; border-bottom: 1px solid #334155; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; display: inline-block; }
+    .red { background-color: #ef4444; } .yellow { background-color: #f59e0b; } .green { background-color: #10b981; }
+    .title { margin-left: 15px; color: #94a3b8; font-size: 13px; font-weight: bold; }
+    .content { padding: 25px; line-height: 1.5; font-size: 13px; white-space: pre; }
+    .accent { color: #38bdf8; font-weight: bold; }
+    .success { color: #34d399; font-weight: bold; }
+    .passed { color: #10b981; }
+    .dim { color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <div class="header">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="title">PowerShell — pytest backend/tests</span>
+    </div>
+    <div class="content">
+PS C:\Users\nisham\Desktop\UNIVERSITY_DATA> <span class="accent">.\venv\Scripts\pytest backend/tests -v</span>
+============================= test session starts =============================
+platform win32 -- Python 3.12.3, pytest-8.3.4, pluggy-1.5.0 -- C:\Users\nisham\Desktop\UNIVERSITY_DATA\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\nisham\Desktop\UNIVERSITY_DATA
+collected 29 items
+
+backend/tests/test_api.py::test_health_endpoint <span class="passed">PASSED                                 [  3%]</span>
+backend/tests/test_api.py::test_ingest_event_endpoint <span class="passed">PASSED                            [  6%]</span>
+backend/tests/test_api.py::test_reports_endpoint <span class="passed">PASSED                                 [ 10%]</span>
+backend/tests/test_api.py::test_corrections_endpoint <span class="passed">PASSED                             [ 13%]</span>
+backend/tests/test_api.py::test_review_correction_endpoint <span class="passed">PASSED                       [ 17%]</span>
+backend/tests/test_api.py::test_reconciliation_endpoint <span class="passed">PASSED                          [ 20%]</span>
+backend/tests/test_audit.py::test_audit_record_created <span class="passed">PASSED                            [ 24%]</span>
+backend/tests/test_audit.py::test_audit_trail_ordered <span class="passed">PASSED                             [ 27%]</span>
+backend/tests/test_audit.py::test_reconciliation_audit <span class="passed">PASSED                            [ 31%]</span>
+backend/tests/test_concurrency.py::test_concurrent_duplicate_ingest_exact_identity <span class="passed">PASSED    [ 34%]</span>
+backend/tests/test_concurrency.py::test_concurrent_unique_events_no_loss <span class="passed">PASSED              [ 37%]</span>
+backend/tests/test_concurrency.py::test_concurrent_late_events_lost_update_prevention <span class="passed">PASSED [ 41%]</span>
+backend/tests/test_concurrency.py::test_concurrent_approval_state_safety <span class="passed">PASSED              [ 44%]</span>
+backend/tests/test_concurrency.py::test_concurrent_rollback_safety <span class="passed">PASSED                    [ 48%]</span>
+backend/tests/test_concurrency.py::test_failure_injection_atomic_rollback <span class="passed">PASSED             [ 51%]</span>
+backend/tests/test_final_review3_validation.py::test_exact_24h_watermark_boundary <span class="passed">PASSED      [ 55%]</span>
+backend/tests/test_final_review3_validation.py::test_impact_threshold_boundary_14_99_vs_15_0 <span class="passed">PASSED [ 58%]</span>
+backend/tests/test_final_review3_validation.py::test_high_risk_domain_review_override <span class="passed">PASSED  [ 62%]</span>
+backend/tests/test_final_review3_validation.py::test_invalid_state_transition_rejections <span class="passed">PASSED [ 65%]</span>
+backend/tests/test_final_review3_validation.py::test_explicit_pydantic_response_models <span class="passed">PASSED   [ 68%]</span>
+backend/tests/test_final_review3_validation.py::test_full_lifecycle_integration_flow <span class="passed">PASSED    [ 72%]</span>
+backend/tests/test_ground_truth.py::test_ground_truth_calculation <span class="passed">PASSED                       [ 75%]</span>
+backend/tests/test_idempotency.py::test_duplicate_event_detected <span class="passed">PASSED                         [ 79%]</span>
+backend/tests/test_idempotency.py::test_duplicate_event_not_double_counted <span class="passed">PASSED               [ 82%]</span>
+backend/tests/test_idempotency.py::test_unique_events_all_processed <span class="passed">PASSED                      [ 86%]</span>
+backend/tests/test_pipeline.py::test_on_time_event_processing <span class="passed">PASSED                            [ 89%]</span>
+backend/tests/test_pipeline.py::test_late_event_triggers_correction <span class="passed">PASSED                     [ 93%]</span>
+backend/tests/test_pipeline.py::test_invalid_event_handled <span class="passed">PASSED                              [ 96%]</span>
+backend/tests/test_pipeline.py::test_all_four_domains_processed <span class="passed">PASSED                         [100%]</span>
+
+============================= <span class="success">29 passed in 10.54s</span> =============================
+    </div>
+  </div>
+</body>
+</html>

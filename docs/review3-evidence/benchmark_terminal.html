@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Benchmark Execution Terminal Evidence</title>
+  <style>
+    body { background-color: #0f172a; color: #f8fafc; font-family: 'Consolas', 'Courier New', monospace; padding: 30px; margin: 0; }
+    .window { background-color: #1e293b; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid #334155; overflow: hidden; }
+    .header { background-color: #0f172a; padding: 12px 20px; display: flex; align-items: center; border-bottom: 1px solid #334155; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; display: inline-block; }
+    .red { background-color: #ef4444; } .yellow { background-color: #f59e0b; } .green { background-color: #10b981; }
+    .title { margin-left: 15px; color: #94a3b8; font-size: 13px; font-weight: bold; }
+    .content { padding: 25px; line-height: 1.5; font-size: 13px; white-space: pre; }
+    .accent { color: #38bdf8; font-weight: bold; }
+    .success { color: #34d399; font-weight: bold; }
+    .warning { color: #fbbf24; }
+    .dim { color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="window">
+    <div class="header">
+      <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+      <span class="title">PowerShell — python scripts/run_performance_benchmark.py</span>
+    </div>
+    <div class="content">
+<span class="accent">================================================================================
+  RATHINAM TECHNICAL CAMPUS (AUTONOMOUS) — PERFORMANCE BENCHMARK ENGINE
+  A Stateful Watermark and Delta Recalculation Engine for Institutional Big Data
+  Configuration: Seed=42 | Mode=Full Suite | Platform: Windows Python 3.12.3
+================================================================================</span>
+
+[RTC Benchmark] Running event scaling benchmarks (100, 500, 1000, 5000 events)...
+  -> Benchmarking 100 events...
+     <span class="success">Done: 27.54 eps, avg 36.294 ms, min 4.90 ms, max 295.11 ms, peak RAM 0.978 MB</span>
+  -> Benchmarking 500 events...
+     <span class="success">Done: 22.21 eps, avg 45.006 ms, min 5.48 ms, max 196.24 ms, peak RAM 0.438 MB</span>
+  -> Benchmarking 1000 events...
+     <span class="success">Done: 23.21 eps, avg 43.064 ms, min 5.89 ms, max 359.25 ms, peak RAM 0.449 MB</span>
+  -> Benchmarking 5000 events...
+     <span class="success">Done: 20.48 eps, avg 48.806 ms, min 5.85 ms, max 3217.45 ms, peak RAM 0.572 MB</span>
+
+[RTC Benchmark] Running historical replay benchmarks (4 profiles x 1000 events)...
+  -> Replay Completed: 53.39 eps overall throughput.
+[RTC Benchmark] Results saved to data/results/performance_benchmark.json
+
+================================================================================
+  FINAL MEASURED PERFORMANCE BENCHMARK RESULTS
+================================================================================
+Events   | Duration  | Throughput   | Avg Lat   | Min Lat   | Max Lat   | P95 Lat   | P99 Lat   | Peak RAM  | DB Size   
+-------------------------------------------------------------------------------------------------------------------
+100      | 3.63   s  | 27.54    eps | 36.29  ms | 4.90   ms | 295.11 ms | 80.03  ms | 295.11 ms | 0.98   MB | 380.0   KB
+500      | 22.51  s  | 22.21    eps | 45.01  ms | 5.48   ms | 196.24 ms | 97.73  ms | 140.69 ms | 0.44   MB | 1352.0  KB
+1000     | 43.08  s  | 23.21    eps | 43.06  ms | 5.89   ms | 359.25 ms | 78.15  ms | 105.08 ms | 0.45   MB | 2552.0  KB
+5000     | 244.11 s  | 20.48    eps | 48.81  ms | 5.85   ms | 3217.45ms | 91.37  ms | 143.23 ms | 0.57   MB | 11596.0 KB
+
+================================================================================
+  HISTORICAL REPLAY BENCHMARK (Total: 4000 events, Duration: 74.926s, Overall Throughput: 53.39 eps)
+================================================================================
+  * Normal Institutional Stream      -> 1000 events in  44.22s (  22.62 eps, P95:  66.94ms, RAM:  0.42 MB)
+  * Late-Event-Heavy Stream          -> 1000 events in  11.26s (  88.80 eps, P95:  19.23ms, RAM:  0.07 MB)
+  * Duplicate-Heavy Stream           -> 1000 events in   9.79s ( 102.10 eps, P95:  13.70ms, RAM:  0.06 MB)
+  * 7-Day Delayed Ingestion Lag      -> 1000 events in   9.65s ( 103.59 eps, P95:  14.15ms, RAM:  0.07 MB)
+================================================================================
+    </div>
+  </div>
+</body>
+</html>
