@@ -47,17 +47,22 @@ export async function fetchPendingReviews() {
   return res.json();
 }
 
-export async function handleReviewAction(correctionId, action, reviewerName = 'RTC Data Administrator') {
+export async function handleReviewAction(correctionId, action, reviewerName = 'RTC Data Administrator', reason = null) {
   const res = await fetch(`${API_BASE}/reviews/action`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       correction_id: correctionId,
       action: action,
-      reviewer_name: reviewerName
+      reviewer_name: reviewerName,
+      reason: reason
     }),
   });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || data.message || `Review action failed (${res.status})`);
+  }
+  return data;
 }
 
 export async function fetchAuditLogs(domain = '', action = '') {
@@ -83,7 +88,11 @@ export async function triggerRollback(correctionId, reason = 'Data Administrator
       actor: 'RTC Data Administrator'
     }),
   });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || data.message || `Rollback failed (${res.status})`);
+  }
+  return data;
 }
 
 export async function runControlledDemo() {

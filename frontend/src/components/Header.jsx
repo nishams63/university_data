@@ -3,13 +3,14 @@ import { Building2, Play, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-r
 
 export default function Header({ metrics, onRunDemo, isRunningDemo, activeTab, setActiveTab }) {
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'reports', label: 'Reports' },
-    { id: 'events', label: 'Events' },
-    { id: 'review', label: 'Review', count: metrics?.pending_reviews },
-    { id: 'audit', label: 'Audit' },
-    { id: 'experiment', label: 'Experiments' },
-    { id: 'performance', label: 'Engine & Benchmarks' }
+    { id: 'dashboard', label: 'Overview' },
+    { id: 'reports', label: 'Reports & Lineage' },
+    { id: 'events', label: 'Events Stream' },
+    { id: 'review', label: 'Review Queue', count: metrics?.pending_reviews },
+    { id: 'audit', label: 'Audit Lineage' },
+    { id: 'rollback', label: 'Rollback' },
+    { id: 'experiment', label: 'Stress Experiments' },
+    { id: 'performance', label: 'Performance & Health' }
   ];
 
   return (

@@ -5,6 +5,7 @@ import ReportsTab from './components/ReportsTab';
 import EventsTab from './components/EventsTab';
 import ReviewTab from './components/ReviewTab';
 import AuditTab from './components/AuditTab';
+import RollbackTab from './components/RollbackTab';
 import ExperimentTab from './components/ExperimentTab';
 import PerformanceTab from './components/PerformanceTab';
 import DemoModal from './components/DemoModal';
@@ -71,7 +72,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
       
-      {/* Header & 6 Top Navigation Tabs */}
+      {/* Header & 8 Top Navigation Tabs */}
       <Header
         metrics={metrics}
         onRunDemo={handleRunDemo}
@@ -113,6 +114,10 @@ export default function App() {
 
             {activeTab === 'audit' && (
               <AuditTab auditLogs={auditLogs} onRefresh={loadAllData} />
+            )}
+
+            {activeTab === 'rollback' && (
+              <RollbackTab onRefresh={loadAllData} />
             )}
 
             {activeTab === 'experiment' && (

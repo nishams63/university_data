@@ -172,6 +172,7 @@ export default function PerformanceTab() {
                 <th className="py-2.5 px-4">Duration</th>
                 <th className="py-2.5 px-4">Throughput</th>
                 <th className="py-2.5 px-4">Avg Latency</th>
+                <th className="py-2.5 px-4">Min / Max</th>
                 <th className="py-2.5 px-4">P95 Latency</th>
                 <th className="py-2.5 px-4">P99 Latency</th>
                 <th className="py-2.5 px-4">Peak RAM</th>
@@ -185,6 +186,9 @@ export default function PerformanceTab() {
                   <td className="py-3 px-4 text-slate-300">{sc.duration_seconds} s</td>
                   <td className="py-3 px-4 text-emerald-400 font-bold">{sc.events_per_second} eps</td>
                   <td className="py-3 px-4 text-indigo-300">{sc.avg_latency_ms} ms</td>
+                  <td className="py-3 px-4 text-slate-400 text-[11px]">
+                    {sc.min_latency_ms !== undefined ? `${sc.min_latency_ms} / ${sc.max_latency_ms} ms` : '—'}
+                  </td>
                   <td className="py-3 px-4 text-slate-300">{sc.p95_latency_ms} ms</td>
                   <td className="py-3 px-4 text-slate-300">{sc.p99_latency_ms} ms</td>
                   <td className="py-3 px-4 text-amber-300 font-bold">{sc.peak_memory_mb} MB</td>
